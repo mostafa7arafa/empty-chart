@@ -1,56 +1,45 @@
 "use client";
 
-import { createContext, useContext, useSyncExternalStore, useCallback } from "react";
+import { useEffect, useRef, useState, createContext, useContext, type ReactNode } from "react";
 
-type Theme = "light" | "dark";
-
-const ThemeContext = createContext<{
-  theme: Theme;
+interface ThemeContextType {
+  theme: "light" | "dark";
   toggleTheme: () => void;
-}>({ theme: "light", toggleTheme: () => {} });
+}
+
+const ThemeContext = createContext<ThemeContextType>({ theme: "light", toggleTheme: () => {} });
 
 export function useTheme() {
   return useContext(ThemeContext);
 }
 
-function getThemeSnapshot(): Theme {
-  return (localStorage.getItem("emptychart-theme") as Theme) || "light";
-}
-
-function getServerSnapshot(): Theme {
+function getInitialTheme(): "light" | "dark" {
+  if (typeof window === "undefined") return "light";
+  const saved = localStorage.getItem("empty-chart-theme") as "light" | "dark" | null;
+  if (saved) return saved;
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
   return "light";
 }
 
-function subscribe(callback: () => void) {
-  const handler = () => {
-    document.documentElement.classList.toggle(
-      "dark",
-      localStorage.getItem("emptychart-theme") === "dark"
-    );
-    callback();
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const next = theme === "light" ? "dark" : "light";
+    setTheme(next);
+    localStorage.setItem("empty-chart-theme", next);
+    document.documentElement.classList.toggle("dark", next === "dark");
   };
-  window.addEventListener("theme-change", handler);
-  // Sync class on mount
-  document.documentElement.classList.toggle(
-    "dark",
-    localStorage.getItem("emptychart-theme") === "dark"
-  );
-  return () => window.removeEventListener("theme-change", handler);
-}
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const theme = useSyncExternalStore(subscribe, getThemeSnapshot, getServerSnapshot);
-
-  const toggleTheme = useCallback(() => {
-    const current = localStorage.getItem("emptychart-theme") || "light";
-    const next = current === "light" ? "dark" : "light";
-    localStorage.setItem("emptychart-theme", next);
-    window.dispatchEvent(new Event("theme-change"));
-  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext value={{ theme, toggleTheme }}>
       {children}
-    </ThemeContext.Provider>
+    </ThemeContext>
   );
 }
