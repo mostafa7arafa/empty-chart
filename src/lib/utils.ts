@@ -1,0 +1,18 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function formatPrice(price: number): string {
+  return new Intl.NumberFormat("en-EG", {
+    style: "currency",
+    currency: "EGP",
+    minimumFractionDigits: 0,
+  }).format(price);
+}
+
+export function calculateInstallment(price: number, months: number = 12): string {
+  return formatPrice(Math.ceil(price / months));
+}
