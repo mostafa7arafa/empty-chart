@@ -29,8 +29,21 @@ export function AIRecommendations() {
         </motion.div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {recommended.map((product, i) => (
-            <ProductCard key={product.id} product={product} index={i} />
+          {recommended.map((product) => (
+            <ProductCard
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              slug={product.id}
+              price={product.price}
+              originalPrice={product.originalPrice}
+              image={product.image}
+              brand={product.brand}
+              rating={product.rating}
+              reviewCount={product.reviews}
+              badge={product.badge}
+              stock={99}
+            />
           ))}
         </div>
       </div>
